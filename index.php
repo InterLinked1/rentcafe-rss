@@ -35,14 +35,17 @@ if (!file_exists($htmlFile) || (filemtime($htmlFile) < (time() - $cacheSeconds))
 
 	if ($html === false) {
 		http_response_code(500);
-		die("Couldn't curl webpage");
+		die("Couldn't curl webpage $url");
 	}
 
 	$auth = strstr($html, "__RequestVerificationToken");
 	if (!$auth) {
 		http_response_code(500);
-		file_put_contents("/var/www/html/rentcafe/html.html", $html);
-		die("Couldn't find RequestVerificationToken");
+		if (file_put_contents("html.html", $html) === false) {
+			$dir = dirname(__FILE__);
+			echo "Unable to write HTML file to disk... insufficient permissions? (Quick fix: <code>chmod -r 777 $dir</code>)<br>";
+		}
+		die("Couldn't find RequestVerificationToken on page $url - command failed: $cmd");
 	}
 	$auth = strstr($auth, "value");
 	/* Skip value=" */
